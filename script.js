@@ -254,6 +254,57 @@ const GridController = (function () {
 
 
 /* ─────────────────────────────────────────────
+   4.5 MOBİL SES KİLİDİ AÇICI (iOS / Android)
+       iOS Safari, AudioContext'i ilk kullanıcı
+       etkileşimine kadar askıya alır. Bu IIFE
+       sayfaya ilk dokunulduğunda sessiz bir
+       AudioContext buffer çalarak kilidi açar
+       ve audioEl.play()'in güvenilir çalışmasını
+       sağlar.
+   ───────────────────────────────────────────── */
+(function setupMobileAudioUnlock() {
+  const audioEl = document.getElementById('bg-audio');
+  if (!audioEl) return;
+
+  let unlocked = false;
+
+  // AudioContext kilidi açma (iOS için zorunlu)
+  function unlockAudioContext() {
+    if (unlocked) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try {
+      const ctx = new AC();
+      // Sessiz 1 sample'lık buffer çal
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+      // Context suspended ise resume et
+      if (ctx.state === 'suspended') ctx.resume();
+      unlocked = true;
+    } catch (err) { /* sessizce geç */ }
+  }
+
+  // Güvenilir ses çalma fonksiyonu — global olarak açık
+  window.safePlayAudio = function (el, volume) {
+    unlockAudioContext();
+    el = el || audioEl;
+    if (volume !== undefined) el.volume = volume;
+    // play() bir Promise döner; .catch ile hataları yakala
+    const p = el.play();
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+  };
+
+  // Sayfaya ilk dokunuşta context'i aç (preemptive unlock)
+  document.addEventListener('touchstart', function onFirstTouch() {
+    unlockAudioContext();
+    document.removeEventListener('touchstart', onFirstTouch);
+  }, { once: true, passive: true });
+})();
+
+/* ─────────────────────────────────────────────
    5. BOOT BUTTON
       • Touch device: "basili tut" hold-to-boot (MOBILE)
       • Desktop:       normal click              (DESKTOP, unchanged)
@@ -278,8 +329,13 @@ const GridController = (function () {
     // iOS 13 gyro permission on gesture
     if (window.__requestGyroPermission) window.__requestGyroPermission();
 
-    audioEl.volume = 0.35;
-    audioEl.play().catch(() => {});
+    // triggerBoot içinde de güvenilir ses çalma
+    if (window.safePlayAudio) {
+      window.safePlayAudio(audioEl, 0.35);
+    } else {
+      audioEl.volume = 0.35;
+      audioEl.play().catch(() => {});
+    }
     GridController.hyperdrive();
     if (window.stopBootParticles) window.stopBootParticles();
     bootScreen.classList.add('fade-out');
@@ -308,9 +364,13 @@ const GridController = (function () {
       // Prevent page scroll while holding
       e.preventDefault();
       
-      // Müzik çalmaya başlasın
-      audioEl.volume = 0.35;
-      audioEl.play().catch(() => {});
+      // Müzik çalmaya başlasın — iOS kilidi açık yöntemle
+      if (window.safePlayAudio) {
+        window.safePlayAudio(audioEl, 0.35);
+      } else {
+        audioEl.volume = 0.35;
+        audioEl.play().catch(() => {});
+      }
 
       progress = 0;
       function tick() {
