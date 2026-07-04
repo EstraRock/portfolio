@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Esat Yusuf Taş — Elektrik-Elektronik Mühendisi, Robotik Kaptanı ve Sistem Geliştirici." />
+  <meta name="author" content="Esat Yusuf Taş" />
+  <title>Esat Yusuf Taş // Cyber Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet" />
+  <!-- model-viewer -->
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ░░ BOOT SCREEN ░░ -->
+  <div id="boot-screen">
+    <canvas id="boot-particles"></canvas>
+    <div class="boot-content">
+      <div class="boot-logo">
+        <div class="boot-scanline"></div>
+        <p class="boot-sys-text" id="boot-sys-text"></p>
+        <h1 class="boot-title">SYSTEM OFFLINE</h1>
+        <p class="boot-subtitle">// ESAT YUSUF TAŞ :: NEURAL INTERFACE v2.0.4</p>
+        <div class="boot-bar-wrap">
+          <div class="boot-bar-label">SİSTEM HAZIR — BAĞLANTI BEKLENİYOR</div>
+          <div class="boot-bar"><div class="boot-bar-fill" id="boot-bar-fill"></div></div>
+        </div>
+        <button id="boot-btn" aria-label="Sistemi Başlat">
+          <span class="btn-bracket">[</span>
+          <span class="btn-text"> SİSTEMİ BAŞLAT </span>
+          <span class="btn-bracket">]</span>
+          <span class="btn-cursor">█</span>
+          <!-- hold-to-boot progress (mobile only, hidden on desktop) -->
+          <span class="hold-progress" id="hold-progress" aria-hidden="true"></span>
+        </button>
+        <!-- mobile hold hint -->
+        <p class="boot-hold-hint" id="boot-hold-hint" aria-hidden="true">📱 Basılı tut</p>
+        <p class="boot-warning">⚠ UYARI: İçerik yüklenmesi ses çalabilir</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ░░ MAIN CANVAS BACKGROUND ░░ -->
+  <canvas id="cyber-grid"></canvas>
+
+  <!-- ░░ OVERLAYS ░░ -->
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="vignette"  aria-hidden="true"></div>
+
+  <!-- ░░ AUDIO ░░ -->
+  <audio id="bg-audio" loop preload="none">
+    <source src="bg-audio.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- ░░ F1 GAME OVERLAY ░░ -->
+  <div id="f1-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="F1 Tepki Süresi Oyunu">
+    <div class="f1-box">
+      <div class="f1-header">
+        <span class="panel-tag">// F1 REACTION TEST</span>
+        <button id="f1-close" aria-label="Oyunu kapat">✕</button>
+      </div>
+      <div class="f1-lights-row" id="f1-lights">
+        <div class="f1-light" id="f1-l1" aria-hidden="true"></div>
+        <div class="f1-light" id="f1-l2" aria-hidden="true"></div>
+        <div class="f1-light" id="f1-l3" aria-hidden="true"></div>
+        <div class="f1-light" id="f1-l4" aria-hidden="true"></div>
+        <div class="f1-light" id="f1-l5" aria-hidden="true"></div>
+      </div>
+      <div class="f1-status" id="f1-status">HAZIRLAN...</div>
+      <button id="f1-go-btn" class="f1-go-btn" disabled aria-label="Gaz ver">
+        GEÇ !
+      </button>
+      <div class="f1-result" id="f1-result"></div>
+    </div>
+  </div>
+
+  <!-- ░░ MAIN CONTENT ░░ -->
+  <div id="main-content" class="hidden" role="main">
+
+    <!-- ── HEADER ── -->
+    <header id="header" class="site-header">
+      <div class="header-inner">
+        <div class="header-tag">// NEURAL LINK ESTABLISHED</div>
+        <h1 class="glitch-title" data-text="ESAT YUSUF TAŞ" id="main-title">ESAT YUSUF TAŞ</h1>
+        <div class="subtitle-wrap">
+          <span class="prompt-char">&gt;&nbsp;</span>
+          <span id="subtitle-text" class="typewriter-text"></span>
+          <span class="cursor-blink" aria-hidden="true">█</span>
+        </div>
+        <div class="header-decor" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── ABOUT (with interactive terminal) ── -->
+    <section id="about" class="section">
+      <div class="holo-panel panel-about">
+        <div class="panel-header">
+          <span class="panel-tag">SYS://ABOUT &amp; TERMINAL</span>
+          <div class="panel-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+        <div class="terminal-block" id="terminal-block">
+          <!-- initial cat about.txt output -->
+          <div class="terminal-line">
+            <span class="t-user">root@esat</span><span class="t-sep">:</span><span class="t-path">~</span><span class="t-sep">$</span>
+            <span class="t-cmd"> cat about.txt</span>
+          </div>
+          <div class="terminal-output" id="about-output"></div>
+
+          <!-- interactive terminal history -->
+          <div id="term-history"></div>
+
+          <!-- input line -->
+          <div class="terminal-input-line" id="terminal-input-wrap">
+            <span class="t-user">root@esat</span><span class="t-sep">:</span><span class="t-path">~</span><span class="t-sep">$</span>
+            <span>&nbsp;</span>
+            <input
+              type="text"
+              id="term-input"
+              class="term-input"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              aria-label="Terminal komutu girin"
+              placeholder="komut girin… (help)"
+              enterkeyhint="send"
+            />
+            <!-- mobile-only close button -->
+            <button id="term-mobile-close" class="term-mobile-close" aria-label="Terminali kapat">✕</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SKILLS ── -->
+    <section id="skills" class="section">
+      <div class="holo-panel panel-skills">
+        <div class="panel-header">
+          <span class="panel-tag">SYS://SKILL_TREE</span>
+          <div class="panel-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+        <div class="skills-grid">
+          <div class="skill-node" id="sk-cpp">
+            <div class="skill-icon">⚙</div>
+            <div class="skill-info">
+              <div class="skill-name">C / C++</div>
+              <div class="skill-bar-wrap"><div class="skill-bar" style="--pct:92%"></div></div>
+              <div class="skill-level">MASTER</div>
+            </div>
+          </div>
+          <div class="skill-node" id="sk-py">
+            <div class="skill-icon">🐍</div>
+            <div class="skill-info">
+              <div class="skill-name">Python</div>
+              <div class="skill-bar-wrap"><div class="skill-bar" style="--pct:88%"></div></div>
+              <div class="skill-level">EXPERT</div>
+            </div>
+          </div>
+          <div class="skill-node" id="sk-flutter">
+            <div class="skill-icon">◈</div>
+            <div class="skill-info">
+              <div class="skill-name">Flutter</div>
+              <div class="skill-bar-wrap"><div class="skill-bar" style="--pct:78%"></div></div>
+              <div class="skill-level">ADVANCED</div>
+            </div>
+          </div>
+          <div class="skill-node" id="sk-embed">
+            <div class="skill-icon">🔌</div>
+            <div class="skill-info">
+              <div class="skill-name">Gömülü Sistemler</div>
+              <div class="skill-bar-wrap"><div class="skill-bar" style="--pct:90%"></div></div>
+              <div class="skill-level">MASTER</div>
+            </div>
+          </div>
+          <div class="skill-node" id="sk-rag">
+            <div class="skill-icon">🧠</div>
+            <div class="skill-info">
+              <div class="skill-name">Local RAG Mimarileri</div>
+              <div class="skill-bar-wrap"><div class="skill-bar" style="--pct:82%"></div></div>
+              <div class="skill-level">EXPERT</div>
+            </div>
+          </div>
+          <div class="skill-node" id="sk-3d">
+            <div class="skill-icon">◻</div>
+            <div class="skill-info">
+              <div class="skill-name">3D Modelleme</div>
+              <div class="skill-bar-wrap"><div class="skill-bar" style="--pct:75%"></div></div>
+              <div class="skill-level">ADVANCED</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 3D HOLOGRAM VIEWER ── -->
+    <section id="hologram" class="section">
+      <div class="holo-panel panel-hologram">
+        <div class="panel-header">
+          <span class="panel-tag">SYS://HOLOGRAM_ROOM &nbsp;·&nbsp; <span class="neon-green">360° DÖNDÜR | ZOOM</span></span>
+          <div class="panel-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+        <div class="hologram-stage" id="hologram-stage">
+          <!-- Rotating rings -->
+          <div class="holo-ring-wrap" aria-hidden="true">
+            <div class="holo-ring ring-1"></div>
+            <div class="holo-ring ring-2"></div>
+            <div class="holo-ring ring-3"></div>
+          </div>
+          <!-- Scan line -->
+          <div class="holo-scan" aria-hidden="true"></div>
+          <!-- model-viewer -->
+          <model-viewer
+            id="model3d"
+            src="https://modelviewer.dev/shared-assets/models/RobotExpressive.glb"
+            alt="İnteraktif 3D Robot Modeli"
+            camera-controls
+            auto-rotate
+            auto-rotate-delay="0"
+            rotation-per-second="30deg"
+            environment-image="neutral"
+            shadow-intensity="0"
+            exposure="0.6"
+            style="
+              width: 100%; height: 420px;
+              background: transparent;
+              --poster-color: transparent;
+              touch-action: pan-y;
+            "
+          ></model-viewer>
+          <!-- mobile scroll-lock overlay (progressive enhancement) -->
+          <div id="model-lock-overlay" class="model-lock-overlay" aria-label="Modeli etkileşime aç" role="button" tabindex="0">
+            <div class="model-lock-inner">
+              <span class="model-lock-icon">☉</span>
+              <span class="model-lock-text">DOKUNARAK AKTİFLEŞTİR</span>
+              <span class="model-lock-sub">360° döndür · zoom</span>
+            </div>
+          </div>
+          <!-- HUD corners -->
+          <div class="hud-corner hud-tl" aria-hidden="true"></div>
+          <div class="hud-corner hud-tr" aria-hidden="true"></div>
+          <div class="hud-corner hud-bl" aria-hidden="true"></div>
+          <div class="hud-corner hud-br" aria-hidden="true"></div>
+          <div class="hud-label-tl" aria-hidden="true">MODEL: RX-7 AUTONOMOUS</div>
+          <div class="hud-label-tr" aria-hidden="true">STATUS: ONLINE</div>
+          <div class="hud-label-bl" aria-hidden="true">NODE: EYT-2024</div>
+          <div class="hud-label-br" aria-hidden="true">RENDER: REALTIME</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── LINKS ── -->
+    <section id="links" class="section">
+      <div class="holo-panel panel-links">
+        <div class="panel-header">
+          <span class="panel-tag">SYS://CONNECTIONS</span>
+          <div class="panel-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+        <div class="links-grid">
+          <a href="https://linkedin.com/in/" target="_blank" rel="noopener noreferrer" class="cyber-btn" id="btn-linkedin" aria-label="LinkedIn">
+            <span class="btn-icon">▣</span><span>LINKEDIN</span><span class="btn-arrow">→</span>
+          </a>
+          <a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" class="cyber-btn" id="btn-instagram" aria-label="Instagram">
+            <span class="btn-icon">◈</span><span>INSTAGRAM</span><span class="btn-arrow">→</span>
+          </a>
+          <a href="cv.pdf" download class="cyber-btn cyber-btn-accent" id="btn-cv" aria-label="CV İndir">
+            <span class="btn-icon">⬇</span><span>CV İNDİR</span><span class="btn-arrow">→</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FOOTER ── -->
+    <footer class="site-footer">
+      <p>// ESAT YUSUF TAŞ &nbsp;·&nbsp; MARMARA ÜNİVERSİTESİ EEE &nbsp;·&nbsp; <span class="neon-green">SYSTEM ONLINE</span></p>
+      <p class="footer-coord">GEO:41.0082°N 28.9784°E &nbsp;|&nbsp; NODE_ID:EYT-2024</p>
+    </footer>
+
+  </div><!-- /main-content -->
+
+  <!-- ── AUDIO CONTROL ── -->
+  <button id="audio-toggle" class="audio-toggle hidden" aria-label="Sesi aç/kapat" title="Ses Kontrolü">
+    <span id="audio-icon">♫</span>
+  </button>
+
+  <!-- ── MOUSE VEL HUD ── -->
+  <div id="vel-hud" class="vel-hud hidden" aria-hidden="true">
+    <span class="vel-label">NEURAL FLUX</span>
+    <div class="vel-bar-wrap"><div id="vel-bar" class="vel-bar"></div></div>
+    <span id="vel-val" class="vel-val">0.00</span>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
