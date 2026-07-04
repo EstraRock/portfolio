@@ -845,20 +845,6 @@ function startContentAnimations() {
   });
 })();
 
-  // Also close on Escape
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && termBlock.classList.contains('terminal-fullscreen')) {
-      closeFullscreen();
-    }
-  });
-
-  // Re-open if still focused and window resizes to mobile
-  window.addEventListener('resize', () => {
-    if (!isMobileWidth() && termBlock.classList.contains('terminal-fullscreen')) {
-      closeFullscreen();
-    }
-  }, { passive: true });
-})();
 
 /* ─────────────────────────────────────────────
    14. MODEL-VIEWER SCROLL LOCK (Mobile)
