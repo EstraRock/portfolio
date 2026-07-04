@@ -307,6 +307,11 @@ const GridController = (function () {
       if (btn.disabled) return;
       // Prevent page scroll while holding
       e.preventDefault();
+      
+      // Müzik çalmaya başlasın
+      audioEl.volume = 0.35;
+      audioEl.play().catch(() => {});
+
       progress = 0;
       function tick() {
         progress += (STEP_MS / HOLD_DURATION) * 100;
@@ -317,9 +322,16 @@ const GridController = (function () {
       tick();
     }
     function cancelHold() {
+      // Eğer sistem zaten açılmaya başladıysa (buton devre dışıysa) müziği kesme!
+      if (btn.disabled) return;
+      
       clearTimeout(holdRaf);
       progress = 0;
       holdBar.style.width = '0%';
+      
+      // Müziği durdur ve başa sar
+      audioEl.pause();
+      audioEl.currentTime = 0;
     }
 
     btn.addEventListener('touchstart',  startHold,  { passive: false });
