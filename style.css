@@ -642,57 +642,6 @@ body.is-touch .boot-hold-hint { display: block; }
   .hud-label-tl, .hud-label-tr, .hud-label-bl, .hud-label-br { display: none; }
   .vel-hud { display: none; }
 
-  /* ── FULLSCREEN TERMINAL (mobile keyboard-safe) ──
-     Only activates when JS adds .terminal-fullscreen class.          */
-  .terminal-block.terminal-fullscreen {
-    position: fixed;
-    inset: 0;
-    z-index: 6000;
-    background: rgba(6, 8, 16, 0.97);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    max-height: 100dvh; /* dynamic viewport height: avoids keyboard overlap */
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    border: 1px solid var(--neon-dim);
-    border-radius: 0;
-    overflow: hidden;
-    box-shadow: 0 0 40px rgba(0,255,204,.12);
-  }
-  /* When fullscreen, grow history area and pin input at bottom */
-  .terminal-block.terminal-fullscreen #term-history,
-  .terminal-block.terminal-fullscreen #about-output {
-    flex: 1;
-    overflow-y: auto;
-    padding-right: .2rem;
-  }
-  .terminal-block.terminal-fullscreen .terminal-input-line {
-    flex-shrink: 0;
-    border-top: 1px solid var(--panel-border);
-    padding-top: .6rem;
-    margin-top: auto;
-    /* Sit above the soft keyboard */
-    position: sticky;
-    bottom: 0;
-    background: rgba(6,8,16,.97);
-    padding-bottom: env(safe-area-inset-bottom, .4rem);
-  }
-  /* fullscreen header bar */
-  .terminal-block.terminal-fullscreen::before {
-    content: 'TERMINAL // HACK MODE';
-    display: block;
-    font-family: var(--font-term);
-    font-size: .65rem;
-    color: var(--neon);
-    letter-spacing: .25em;
-    border-bottom: 1px solid var(--panel-border);
-    padding-bottom: .6rem;
-    margin-bottom: .6rem;
-    flex-shrink: 0;
-    text-shadow: 0 0 6px var(--neon);
-  }
-}
 
 @media (max-width: 400px) {
   #main-content { padding: 0 1rem 3rem; }

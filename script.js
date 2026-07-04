@@ -812,37 +812,38 @@ function startContentAnimations() {
 }
 
 /* ─────────────────────────────────────────────
-   13. MOBILE FULLSCREEN TERMINAL
-       Progressive enhancement: only activates on ≤600px screens.
-       Desktop terminal stays exactly as-is.
+   13. MOBILE TERMINAL
+       Fullscreen modu devre dışı bırakıldı.
+       Terminal artık mobilde de sayfa içinde
+       normal konumda kalır; scroll kilitlenmez.
    ───────────────────────────────────────────── */
 (function initMobileTerminal() {
-  const isMobileWidth = () => window.matchMedia('(max-width: 600px)').matches;
   const termBlock = document.getElementById('terminal-block');
   const termInput = document.getElementById('term-input');
   const closeBtn  = document.getElementById('term-mobile-close');
 
   if (!termBlock || !termInput || !closeBtn) return;
 
-  function openFullscreen() {
-    if (!isMobileWidth()) return;
-    termBlock.classList.add('terminal-fullscreen');
-    document.body.style.overflow = 'hidden'; // prevent scroll behind
-    // Scroll history to bottom
+  // Terminale tıklanınca sadece geçmişi alta kaydır, fullscreen AÇMA
+  termInput.addEventListener('focus', () => {
     setTimeout(() => {
       const hist = document.getElementById('term-history');
       if (hist) hist.scrollTop = hist.scrollHeight;
+      // Terminal'in görünür olması için sayfayı kaydır
+      termBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 50);
-  }
+  }, { passive: true });
 
-  function closeFullscreen() {
-    termBlock.classList.remove('terminal-fullscreen');
-    document.body.style.overflow = '';
+  // Kapat butonuna basılınca sadece blur yap (sayfa zaten açık)
+  closeBtn.addEventListener('click', () => {
     termInput.blur();
-  }
+  });
 
-  termInput.addEventListener('focus', openFullscreen, { passive: true });
-  closeBtn.addEventListener('click', () => { closeFullscreen(); });
+  // Escape ile blur
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') termInput.blur();
+  });
+})();
 
   // Also close on Escape
   document.addEventListener('keydown', e => {
