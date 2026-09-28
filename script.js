@@ -363,54 +363,121 @@ const GridController = (function () {
 
 
 /* ─────────────────────────────────────────────
-   4.5 MOBİL SES KİLİDİ AÇICI (iOS / Android)
-       iOS Safari, AudioContext'i ilk kullanıcı
-       etkileşimine kadar askıya alır. Bu IIFE
-       sayfaya ilk dokunulduğunda sessiz bir
-       AudioContext buffer çalarak kilidi açar
-       ve audioEl.play()'in güvenilir çalışmasını
-       sağlar.
+   4.5 MOBİL SES YÖNETİCİSİ (AudioManager)
+       iOS ve Android'de arka plan geçişleri, ekran
+       kilitleme ve çoklu açıp kapatmalarda sesin
+       askıya alınmasını (suspended / paused bug) çözer.
    ───────────────────────────────────────────── */
-(function setupMobileAudioUnlock() {
+const AudioManager = (function setupAudioManager() {
   const audioEl = document.getElementById('bg-audio');
-  if (!audioEl) return;
+  const btn = document.getElementById('audio-toggle');
+  const icon = document.getElementById('audio-icon');
 
-  let unlocked = false;
+  let isUserMuted = false;
+  let audioContextUnlocked = false;
 
-  // AudioContext kilidi açma (iOS için zorunlu)
   function unlockAudioContext() {
-    if (unlocked) return;
+    if (audioContextUnlocked) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     try {
       const ctx = new AC();
-      // Sessiz 1 sample'lık buffer çal
       const buf = ctx.createBuffer(1, 1, 22050);
       const src = ctx.createBufferSource();
       src.buffer = buf;
       src.connect(ctx.destination);
       src.start(0);
-      // Context suspended ise resume et
       if (ctx.state === 'suspended') ctx.resume();
-      unlocked = true;
-    } catch (err) { /* sessizce geç */ }
+      audioContextUnlocked = true;
+    } catch (e) {}
   }
 
-  // Güvenilir ses çalma fonksiyonu — global olarak açık
-  window.safePlayAudio = function (el, volume) {
+  function syncUI() {
+    if (!btn || !icon || !audioEl) return;
+    const isPlaying = !audioEl.paused && !audioEl.muted && !isUserMuted;
+    btn.classList.toggle('muted', !isPlaying);
+    icon.textContent = isPlaying ? '♫' : '✕';
+    btn.setAttribute('aria-label', isPlaying ? 'Sesi kapat' : 'Sesi aç');
+  }
+
+  if (audioEl) {
+    audioEl.addEventListener('play', syncUI);
+    audioEl.addEventListener('pause', syncUI);
+    audioEl.addEventListener('volumechange', syncUI);
+  }
+
+  function play(targetVolume = 0.35) {
+    if (!audioEl) return Promise.resolve();
     unlockAudioContext();
-    el = el || audioEl;
-    if (volume !== undefined) el.volume = volume;
-    // play() bir Promise döner; .catch ile hataları yakala
-    const p = el.play();
-    if (p && typeof p.catch === 'function') p.catch(() => {});
+    isUserMuted = false;
+    audioEl.muted = false;
+    try { audioEl.volume = targetVolume; } catch (e) {}
+
+    const playPromise = audioEl.play();
+    if (playPromise !== undefined) {
+      return playPromise.then(() => {
+        syncUI();
+      }).catch(err => {
+        console.warn('Audio play deferred or blocked by browser policy:', err);
+        syncUI();
+        // Mobilde autoplay engellendiyse ekrana ilk dokunuşta otomatik devam ettir
+        const autoRetryTouch = () => {
+          if (!isUserMuted && audioEl.paused) {
+            audioEl.play().then(syncUI).catch(() => {});
+          }
+          window.removeEventListener('touchstart', autoRetryTouch);
+          window.removeEventListener('click', autoRetryTouch);
+        };
+        window.addEventListener('touchstart', autoRetryTouch, { passive: true, once: true });
+        window.addEventListener('click', autoRetryTouch, { passive: true, once: true });
+      });
+    }
+    return Promise.resolve();
+  }
+
+  function pause() {
+    if (!audioEl) return;
+    isUserMuted = true;
+    audioEl.pause();
+    syncUI();
+  }
+
+  function toggle() {
+    if (!audioEl) return;
+    unlockAudioContext();
+    // Eğer duraklatılmışsa veya sessize alınmışsa çal, çalıyorsa duraklat
+    if (audioEl.paused || audioEl.muted || isUserMuted) {
+      play();
+    } else {
+      pause();
+    }
+  }
+
+  // Preemptive unlock on first user gesture
+  const onFirstInteraction = () => {
+    unlockAudioContext();
+    if (audioEl && audioEl.paused) {
+      try { audioEl.load(); } catch (e) {}
+    }
+    window.removeEventListener('touchstart', onFirstInteraction);
+    window.removeEventListener('pointerdown', onFirstInteraction);
+  };
+  window.addEventListener('touchstart', onFirstInteraction, { passive: true, once: true });
+  window.addEventListener('pointerdown', onFirstInteraction, { passive: true, once: true });
+
+  window.safePlayAudio = function (el, volume) {
+    play(volume !== undefined ? volume : 0.35);
   };
 
-  // Sayfaya ilk dokunuşta context'i aç (preemptive unlock)
-  document.addEventListener('touchstart', function onFirstTouch() {
-    unlockAudioContext();
-    document.removeEventListener('touchstart', onFirstTouch);
-  }, { once: true, passive: true });
+  return {
+    play,
+    pause,
+    toggle,
+    syncUI,
+    get isPlaying() { return audioEl ? (!audioEl.paused && !audioEl.muted && !isUserMuted) : false; },
+    get isUserMuted() { return isUserMuted; },
+    get element() { return audioEl; }
+  };
 })();
 
 /* ─────────────────────────────────────────────
@@ -521,8 +588,7 @@ const GridController = (function () {
   }
 
   function playAudio() {
-    if (window.safePlayAudio) window.safePlayAudio(audioEl, 0.35);
-    else { audioEl.volume = 0.35; audioEl.play().catch(() => {}); }
+    AudioManager.play(0.35);
   }
 
   /* ── PROGRESS & VISUALS ── */
@@ -1039,16 +1105,12 @@ const F1Game = (function () {
    11. AUDIO TOGGLE
    ───────────────────────────────────────────── */
 (function initAudioToggle() {
-  const btn  = document.getElementById('audio-toggle');
-  const icon = document.getElementById('audio-icon');
-  const aud  = document.getElementById('bg-audio');
-  let muted  = false;
-  btn.addEventListener('click', () => {
-    muted = !muted;
-    aud.muted = muted;
-    icon.textContent = muted ? '✕' : '♫';
-    btn.classList.toggle('muted', muted);
-    btn.setAttribute('aria-label', muted ? 'Sesi aç' : 'Sesi kapat');
+  const btn = document.getElementById('audio-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    AudioManager.toggle();
   });
 })();
 
@@ -1224,16 +1286,16 @@ function startContentAnimations() {
         Sekme arka plana atıldığında, uygulama
         değiştirildiğinde veya tarayıcı kapatılırken
         müziği durdurur ve RAM yiyen canvas
-        döngülerini askıya alır.
+        döngülerini askıya alır. Geri dönüldüğünde
+        otomatik ve kesintisiz kurtarma sağlar.
    ───────────────────────────────────────────── */
 (function initBackgroundGuard() {
-  const audioEl = document.getElementById('bg-audio');
-  let audioWasPlaying = false;
+  let wasPlayingBeforeBackground = false;
 
   function pauseHeavyWork() {
-    if (audioEl) {
-      audioWasPlaying = !audioEl.paused && !audioEl.ended;
-      if (audioWasPlaying) audioEl.pause();
+    wasPlayingBeforeBackground = AudioManager.isPlaying;
+    if (wasPlayingBeforeBackground && AudioManager.element) {
+      AudioManager.element.pause();
     }
     if (window.stopBootParticles) window.stopBootParticles();
     GridController.pause();
@@ -1241,9 +1303,8 @@ function startContentAnimations() {
 
   function resumeHeavyWork() {
     GridController.resume();
-    if (audioWasPlaying && audioEl) {
-      if (window.safePlayAudio) window.safePlayAudio(audioEl);
-      else audioEl.play().catch(() => {});
+    if (wasPlayingBeforeBackground && !AudioManager.isUserMuted) {
+      AudioManager.play();
     }
   }
 
