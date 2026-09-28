@@ -453,12 +453,32 @@ const AudioManager = (function setupAudioManager() {
     }
   }
 
+  function primeForPlayback() {
+    if (!audioEl) return;
+    unlockAudioContext();
+    // Tarayıcı güvenlik tokenini almak için dokunma anında sessizce oynatmayı başlatır
+    if (audioEl.paused) {
+      audioEl.muted = true;
+      try { audioEl.volume = 0; } catch (e) {}
+      const p = audioEl.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {});
+      }
+    }
+  }
+
+  function cancelPrime() {
+    if (!audioEl) return;
+    // Sadece henüz yetkilendirme tamamlanmadıysa ve ses sessizdeyse durdur
+    if (audioEl.muted) {
+      audioEl.pause();
+      try { audioEl.currentTime = 0; } catch (e) {}
+    }
+  }
+
   // Preemptive unlock on first user gesture
   const onFirstInteraction = () => {
-    unlockAudioContext();
-    if (audioEl && audioEl.paused) {
-      try { audioEl.load(); } catch (e) {}
-    }
+    primeForPlayback();
     window.removeEventListener('touchstart', onFirstInteraction);
     window.removeEventListener('pointerdown', onFirstInteraction);
   };
@@ -473,6 +493,8 @@ const AudioManager = (function setupAudioManager() {
     play,
     pause,
     toggle,
+    primeForPlayback,
+    cancelPrime,
     syncUI,
     get isPlaying() { return audioEl ? (!audioEl.paused && !audioEl.muted && !isUserMuted) : false; },
     get isUserMuted() { return isUserMuted; },
@@ -614,6 +636,9 @@ const AudioManager = (function setupAudioManager() {
       if (e.type === 'touchstart') e.preventDefault();
     }
 
+    // Dokunulduğu anda tarayıcı ses kilidini sessizce aşar (tek basışta müzik çalabilmesi için kritik)
+    AudioManager.primeForPlayback();
+
     isHolding = true;
     holdStart = performance.now() - (currentPct / 100) * CHARGE_TIME_MS;
     lastMilestone = Math.floor(currentPct / 25);
@@ -650,6 +675,9 @@ const AudioManager = (function setupAudioManager() {
     if (isBreached || !isHolding) return;
     isHolding = false;
     btn.classList.remove('holding');
+
+    // Eğer işlem tamamlanmadan parmak çekildiyse ön-yüklenen sesi durdur
+    AudioManager.cancelPrime();
 
     stopSynthCharge();
 
@@ -699,6 +727,7 @@ const AudioManager = (function setupAudioManager() {
 
     if (window.__requestGyroPermission) window.__requestGyroPermission();
 
+    try { if (audioEl) audioEl.currentTime = 0; } catch (e) {}
     playAudio();
     GridController.hyperdrive();
     if (window.stopMatrixRain) window.stopMatrixRain();
