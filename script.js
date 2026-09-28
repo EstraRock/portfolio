@@ -5,68 +5,104 @@
 'use strict';
 
 /* ─────────────────────────────────────────────
-   1. BOOT PARTICLE CANVAS
+   1. MATRIX DIGITAL RAIN CANVAS
    ───────────────────────────────────────────── */
-(function initBootParticles() {
-  const canvas = document.getElementById('boot-particles');
-  const ctx    = canvas.getContext('2d');
-  let W, H, particles, bootAnimId;
+(function initMatrixRain() {
+  const canvas = document.getElementById('boot-matrix-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, animId;
+  const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>[]{}/\\*+-=%$#@!?~';
+  const fontSize = 14;
+  let columns = 0;
+  let drops = [];
 
   function resize() {
-    W = canvas.width  = window.innerWidth;
+    W = canvas.width = window.innerWidth;
     H = canvas.height = window.innerHeight;
+    columns = Math.floor(W / fontSize);
+    drops = Array.from({ length: columns }, () => Math.floor(Math.random() * -50));
   }
-  function createParticles() {
-    const count = Math.min(80, Math.floor((W * H) / 18000));
-    particles = Array.from({ length: count }, () => ({
-      x:  Math.random() * W,
-      y:  Math.random() * H,
-      size:  Math.random() * 1.5 + 0.3,
-      speed: Math.random() * 0.4 + 0.1,
-      opacity: Math.random() * 0.5 + 0.1,
-      dx: (Math.random() - 0.5) * 0.3,
-    }));
-  }
-  function animateBootParticles() {
-    ctx.clearRect(0, 0, W, H);
-    particles.forEach(p => {
-      p.y -= p.speed; p.x += p.dx;
-      p.opacity = Math.max(0.05, Math.min(0.6, p.opacity + (Math.random() - 0.5) * 0.02));
-      if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; }
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(0,255,204,${p.opacity})`;
-      ctx.fill();
-    });
-    bootAnimId = requestAnimationFrame(animateBootParticles);
-  }
-  window.stopBootParticles = () => cancelAnimationFrame(bootAnimId);
 
-  resize(); createParticles(); animateBootParticles();
-  window.addEventListener('resize', () => { resize(); createParticles(); });
+  function draw() {
+    ctx.fillStyle = 'rgba(3, 5, 9, 0.1)';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.font = `${fontSize}px 'JetBrains Mono', monospace`;
+    const tiltX = parseFloat(document.documentElement.style.getPropertyValue('--tilt-x')) || 0;
+
+    for (let i = 0; i < drops.length; i++) {
+      const char = chars[Math.floor(Math.random() * chars.length)];
+      const y = drops[i] * fontSize;
+      const x = i * fontSize + (y * tiltX * 0.08);
+
+      if (Math.random() > 0.88) {
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#e2e8f0';
+        ctx.shadowBlur = 8;
+      } else {
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(226, 232, 240, 0.75)' : 'rgba(56, 189, 248, 0.65)';
+        ctx.shadowBlur = 0;
+      }
+
+      ctx.fillText(char, x, y);
+
+      if (y > H && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+    animId = requestAnimationFrame(draw);
+  }
+
+  window.stopMatrixRain = () => {
+    if (animId) cancelAnimationFrame(animId);
+  };
+
+  resize();
+  draw();
+  window.addEventListener('resize', resize);
 })();
 
 /* ─────────────────────────────────────────────
-   2. BOOT BAR
+   2. LINUX BIOS / KERNEL BOOT STREAM
    ───────────────────────────────────────────── */
-(function animateBootBar() {
-  const fill     = document.getElementById('boot-bar-fill');
-  const sysText  = document.getElementById('boot-sys-text');
-  const messages = [
-    'INITIALIZING NEURAL INTERFACE...',
-    'LOADING CIPHER PROTOCOLS...',
-    'ESTABLISHING SECURE LINK...',
-    'CALIBRATING HOLOGRAPHIC MATRIX...',
-    'SYSTEM READY. AWAITING AUTHORIZATION.',
+(function initKernelBootLogs() {
+  const container = document.getElementById('boot-kernel-logs');
+  if (!container) return;
+
+  const KERNEL_LINES = [
+    { tag: 'OK',   type: 'ok',   text: 'BIOS: ACPI 6.4 initialized. Hardware verification passed.' },
+    { tag: 'INIT', type: 'info', text: 'Loading Linux 6.9.1-arch1-eyt on x86_64 SMP...' },
+    { tag: 'OK',   type: 'ok',   text: 'CPU: AMD/Intel 16-Core Matrix Threader @ 5.6 GHz active.' },
+    { tag: 'OK',   type: 'ok',   text: 'Memory: 41943040k/43253760k available (2048k kernel code).' },
+    { tag: 'INFO', type: 'info', text: 'Mounted /dev/nvme0n1p2 (ROOT) - ext4 journal recovered.' },
+    { tag: 'SEC',  type: 'sec',  text: 'Cryptographic subsystem: AES-NI, SHA-512, ED25519 accelerated.' },
+    { tag: 'OK',   type: 'ok',   text: 'Started D-Bus System Message Bus on unix:path=/run/dbus/system_bus_socket' },
+    { tag: 'INIT', type: 'info', text: 'Calibrating holographic grid neural tensor driver...' },
+    { tag: 'OK',   type: 'ok',   text: 'PCIe: NVIDIA RTX 5060 Tensor-Core Bus link speed 16.0 GT/s.' },
+    { tag: 'OK',   type: 'ok',   text: 'Robotics Core: Marmara-EEE ROS2 humble bridge connected.' },
+    { tag: 'INFO', type: 'info', text: 'Local RAG vector cache: 14,208 embeddings indexed into memory.' },
+    { tag: 'SEC',  type: 'sec',  text: 'Identity resolved: root (uid=0, gid=0) -> Esat Yusuf Taş.' },
+    { tag: 'WARN', type: 'warn', text: 'SECURITY POLICY: Neural link interface requires explicit manual override.' },
+    { tag: 'AUTH', type: 'auth', text: 'AWAITING BIOMETRIC CONFIRMATION... [PRESS & HOLD TO OVERRIDE]' }
   ];
-  let pct = 0, msgIdx = 0;
-  const iv = setInterval(() => {
-    pct += Math.random() * 3 + 0.5;
-    if (pct >= 100) { pct = 100; clearInterval(iv); }
-    fill.style.width = pct + '%';
-    const ni = Math.min(Math.floor((pct / 100) * messages.length), messages.length - 1);
-    if (ni !== msgIdx) { msgIdx = ni; sysText.textContent = messages[msgIdx]; }
-  }, 60);
+
+  let lineIdx = 0;
+  function printNextLine() {
+    if (lineIdx >= KERNEL_LINES.length) return;
+    const item = KERNEL_LINES[lineIdx++];
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    div.innerHTML = `<span class="log-tag log-${item.type}">[ ${item.tag.padEnd(4, ' ')} ]</span><span>${item.text}</span>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+
+    const delay = Math.floor(Math.random() * 65) + 35;
+    setTimeout(printNextLine, delay);
+  }
+
+  setTimeout(printNextLine, 120);
 })();
 
 /* ─────────────────────────────────────────────
@@ -80,15 +116,19 @@ const GridController = (function () {
 
   const cfg = {
     speed: 0.008, targetSpeed: 0.008, speedLerp: 0.04,
-    fov: 350, lineColor: '0,255,204', lineColorB: '0,229,255',
+    fov: 350, lineColor: '226,232,240', lineColorB: '56,189,248',
     numLines: 20, depth: 1.5,
   };
 
   let zOffset = 0;
+  let camOffsetX = 0, camOffsetY = 0;
+  let targetCamX = 0, targetCamY = 0;
 
   function project(wx, wy, wz) {
     const scale = cfg.fov / (cfg.fov + wz * cfg.fov);
-    return { x: W/2 + wx * scale * W * 0.9, y: H/2 + wy * scale * H * 0.9, scale };
+    const cx = W/2 + camOffsetX * (1 - wz * 0.45);
+    const cy = H/2 + camOffsetY * (1 - wz * 0.45);
+    return { x: cx + wx * scale * W * 0.9, y: cy + wy * scale * H * 0.9, scale };
   }
 
   function resize() {
@@ -101,6 +141,10 @@ const GridController = (function () {
     ctx.clearRect(0, 0, W, H);
     cfg.speed += (cfg.targetSpeed - cfg.speed) * cfg.speedLerp;
     zOffset = (zOffset + cfg.speed) % 1;
+
+    // Smooth gyro camera interpolation
+    camOffsetX += (targetCamX - camOffsetX) * 0.08;
+    camOffsetY += (targetCamY - camOffsetY) * 0.08;
 
     const zSteps = isMobile() ? 8 : 14;
     const n = cfg.numLines;
@@ -145,9 +189,9 @@ const GridController = (function () {
       }
     }
 
-    // Horizon glow
-    const glow = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.min(W,H)*0.35);
-    glow.addColorStop(0, 'rgba(0,255,204,0.06)');
+    // Horizon glow follows camera
+    const glow = ctx.createRadialGradient(W/2 + camOffsetX, H/2 + camOffsetY, 0, W/2 + camOffsetX, H/2 + camOffsetY, Math.min(W,H)*0.35);
+    glow.addColorStop(0, 'rgba(56,189,248,0.06)');
     glow.addColorStop(1, 'transparent');
     ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
@@ -155,25 +199,39 @@ const GridController = (function () {
   }
 
   function start() { resize(); drawFrame(); window.addEventListener('resize', resize); }
+  function pause() { cancelAnimationFrame(animId); animId = null; }
+  function resume() { if (animId == null) drawFrame(); }
   function hyperdrive() {
-    cfg.targetSpeed = 0.08;
-    setTimeout(() => { cfg.targetSpeed = 0.018; }, 2000);
+    cfg.targetSpeed = isMobile() ? 0.06 : 0.11;
+    cfg.speedLerp = isMobile() ? 0.05 : 0.08;
+    setTimeout(() => {
+      cfg.targetSpeed = isMobile() ? 0.008 : 0.015;
+      cfg.speedLerp = 0.04;
+    }, 1800);
   }
 
-  return { start, hyperdrive };
+  function setCameraTilt(tx, ty) {
+    targetCamX = tx * (W * 0.12);
+    targetCamY = ty * (H * 0.10);
+  }
+
+  return { start, pause, resume, hyperdrive, setCameraTilt };
 })();
 
 /* ─────────────────────────────────────────────
-   4. VELOCITY → GLITCH INTENSITY
-      • Desktop: mouse movement speed → --mouse-vel
-      • Mobile:  gyroscope tilt speed  → --mouse-vel  (progressive enhancement)
+   4. CYBER FLUX & ATTITUDE / GYRO TELEMETRY
+      • Autonomous Glitch: Spontaneous cyber flux pulses
+      • Desktop: mouse drives tilt, parallax & velocity
+      • Mobile: hardware gyroscope drives 3D parallax & attitude telemetry
    ───────────────────────────────────────────── */
-(function initVelocityGlitch() {
+(function initCyberFluxAndGyro() {
   let vel = 0, decayTimer;
-  const root   = document.documentElement;
-  const velBar = document.getElementById('vel-bar');
-  const velVal = document.getElementById('vel-val');
-  const velHud = document.getElementById('vel-hud');
+  const root        = document.documentElement;
+  const velBar      = document.getElementById('vel-bar');
+  const velVal      = document.getElementById('vel-val');
+  const velHud      = document.getElementById('vel-hud');
+  const gyroVal     = document.getElementById('gyro-val');
+  const gyroReticle = document.getElementById('gyro-reticle');
 
   function setVelocity(v) {
     vel = Math.min(Math.max(v, 0), 1);
@@ -187,44 +245,97 @@ const GridController = (function () {
     decayTimer = setTimeout(() => {
       let v = vel;
       const decay = setInterval(() => {
-        v *= 0.8;
+        v *= 0.82;
         if (v < 0.01) { v = 0; clearInterval(decay); }
         setVelocity(v);
       }, 50);
-    }, 80);
+    }, 90);
   }
 
-  /* ── DESKTOP: mouse movement ── */
+  /* ── AUTONOMOUS GLITCH PULSES (Kendi kendine siber parazit akışı) ── */
+  function scheduleAutonomousFlux() {
+    const nextInterval = 3200 + Math.random() * 4500;
+    setTimeout(() => {
+      // Periodic subtle cyber signal flux
+      const spike = Math.random() > 0.35 ? (0.12 + Math.random() * 0.22) : (0.45 + Math.random() * 0.35);
+      setVelocity(spike);
+      scheduleDecay();
+
+      // Periodic spontaneous glitch on title
+      if (Math.random() > 0.55) {
+        const title = document.getElementById('main-title');
+        if (title) {
+          title.classList.add('glitching');
+          setTimeout(() => title.classList.remove('glitching'), 300);
+        }
+      }
+
+      scheduleAutonomousFlux();
+    }, nextInterval);
+  }
+  scheduleAutonomousFlux();
+
+  /* ── ATTITUDE HUD UPDATE ── */
+  function updateAttitudeHud(tx, ty) {
+    if (gyroVal) {
+      const pitchDeg = Math.round(ty * 45);
+      const rollDeg  = Math.round(tx * 45);
+      const pStr = (pitchDeg >= 0 ? '+' : '') + pitchDeg;
+      const rStr = (rollDeg >= 0 ? '+' : '') + rollDeg;
+      gyroVal.textContent = `P:${pStr}° R:${rStr}°`;
+    }
+  }
+
+  /* ── DESKTOP: mouse movement drives camera tilt & mouse velocity ── */
   let lastX = 0, lastY = 0, lastT = 0;
+  let gyroActive = false;
+
   window.addEventListener('mousemove', e => {
     const now  = performance.now();
     const dt   = now - lastT || 16;
     const dist = Math.hypot(e.clientX - lastX, e.clientY - lastY);
-    const norm = Math.min(dist / dt / 3, 1); // saturate at 3 px/ms
-    setVelocity(vel < norm ? vel * 0.3 + norm * 0.7 : vel * 0.85 + norm * 0.15);
+    const norm = Math.min(dist / dt / 3.5, 0.85);
+    setVelocity(vel < norm ? vel * 0.25 + norm * 0.75 : vel * 0.85 + norm * 0.15);
     lastX = e.clientX; lastY = e.clientY; lastT = now;
     scheduleDecay();
+
+    // Mouse tilt for desktop (center is 0, -1 to +1)
+    if (!gyroActive) {
+      const tx = ((e.clientX - window.innerWidth / 2) / (window.innerWidth / 2));
+      const ty = ((e.clientY - window.innerHeight / 2) / (window.innerHeight / 2));
+      const clampX = Math.max(-1, Math.min(1, tx));
+      const clampY = Math.max(-1, Math.min(1, ty));
+      root.style.setProperty('--tilt-x', (clampX * 0.6).toFixed(3));
+      root.style.setProperty('--tilt-y', (clampY * 0.6).toFixed(3));
+      if (typeof GridController !== 'undefined' && GridController.setCameraTilt) {
+        GridController.setCameraTilt(clampX * 0.6, clampY * 0.6);
+      }
+      updateAttitudeHud(clampX * 0.6, clampY * 0.6);
+    }
   });
 
-  /* ── MOBILE: gyroscope / device orientation (progressive enhancement) ── */
-  let gyroEnabled  = false;
-  let lastBeta = null, lastGamma = null, lastGyroT = null;
+  /* ── MOBILE: hardware gyroscope ── */
+  let gyroEnabled = false;
 
   function handleOrientation(e) {
     if (e.beta === null || e.gamma === null) return;
-    const now = performance.now();
-    if (lastBeta !== null) {
-      const dt = now - lastGyroT || 16;
-      const dBeta  = Math.abs(e.beta  - lastBeta);
-      const dGamma = Math.abs(e.gamma - lastGamma);
-      // Ignore tiny drift (< 0.5°), normalise: 20°/frame = full glitch
-      const motion = Math.min((dBeta + dGamma) / dt * 8, 1);
-      if (motion > 0.05) {
-        setVelocity(vel < motion ? vel * 0.4 + motion * 0.6 : vel * 0.7 + motion * 0.3);
-        scheduleDecay();
-      }
+    gyroActive = true;
+
+    // Normalize tilt: gamma is roll (-45° to +45°), beta is pitch (calibrated ~45° holding angle)
+    const tx = Math.max(-1, Math.min(1, e.gamma / 40));
+    const ty = Math.max(-1, Math.min(1, (e.beta - 45) / 40));
+
+    root.style.setProperty('--tilt-x', tx.toFixed(3));
+    root.style.setProperty('--tilt-y', ty.toFixed(3));
+
+    // Update 3D Cyber-Grid camera
+    if (typeof GridController !== 'undefined' && GridController.setCameraTilt) {
+      GridController.setCameraTilt(tx, ty);
     }
-    lastBeta = e.beta; lastGamma = e.gamma; lastGyroT = now;
+
+    // Update Attitude telemetry HUD
+    updateAttitudeHud(tx, ty);
+    // Gyro is dedicated to smooth 3D motion, NOT glitch jitter
   }
 
   function activateGyro() {
@@ -233,16 +344,14 @@ const GridController = (function () {
     window.addEventListener('deviceorientation', handleOrientation, { passive: true });
   }
 
-  // iOS 13+ requires explicit permission
+  // iOS 13+ permission & touch activation
   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-    // Store for later; we request after user gesture (boot-btn)
     window.__requestGyroPermission = function() {
       DeviceOrientationEvent.requestPermission()
         .then(state => { if (state === 'granted') activateGyro(); })
         .catch(() => {});
     };
   } else if ('DeviceOrientationEvent' in window) {
-    // Android / older iOS — no permission needed, activate on touch
     window.addEventListener('touchstart', function onFirstTouch() {
       activateGyro();
       window.removeEventListener('touchstart', onFirstTouch);
@@ -305,104 +414,276 @@ const GridController = (function () {
 })();
 
 /* ─────────────────────────────────────────────
-   5. BOOT BUTTON
-      • Touch device: "basili tut" hold-to-boot (MOBILE)
-      • Desktop:       normal click              (DESKTOP, unchanged)
+   5. BIOMETRIC HOLD-TO-BREACH & 3D HYPERDRIVE WARP
    ───────────────────────────────────────────── */
-(function initBootButton() {
-  const btn         = document.getElementById('boot-btn');
-  const holdBar     = document.getElementById('hold-progress');
+(function initHoldToBreach() {
+  const btn         = document.getElementById('boot-hold-btn');
+  const ringProgress= document.getElementById('hold-ring-progress');
+  const statusSub   = document.getElementById('hold-status-sub');
+  const statusMain  = document.getElementById('hold-status-main');
+  const pctEl       = document.getElementById('hold-pct');
+  const protocolEl  = document.getElementById('telem-protocol');
   const bootScreen  = document.getElementById('boot-screen');
   const mainContent = document.getElementById('main-content');
   const audioEl     = document.getElementById('bg-audio');
   const audioBtn    = document.getElementById('audio-toggle');
-  const isTouch     = navigator.maxTouchPoints > 0;
+  const root        = document.documentElement;
 
-  // Mark body so CSS can show hold UX
-  if (isTouch) document.body.classList.add('is-touch');
+  if (!btn || !ringProgress || !bootScreen) return;
 
-  function triggerBoot() {
-    if (btn.disabled) return;
-    btn.disabled = true;
-    btn.style.opacity = '0.5';
+  const CIRCUMFERENCE = 2 * Math.PI * 68; // ~427.26
+  const CHARGE_TIME_MS = 1100; // Hold duration in ms
+  const buzz = (pattern) => { if (navigator.vibrate) navigator.vibrate(pattern); };
 
-    // iOS 13 gyro permission on gesture
+  let isHolding    = false;
+  let isBreached   = false;
+  let holdStart    = 0;
+  let animFrameId  = null;
+  let currentPct   = 0;
+  let lastMilestone= 0;
+
+  /* ── WEB AUDIO SYNTHESIZER ── */
+  let audioCtx  = null;
+  let chargeOsc = null;
+  let chargeGain= null;
+
+  function getAudioCtx() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    return audioCtx;
+  }
+
+  function startSynthCharge() {
+    try {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      chargeOsc = ctx.createOscillator();
+      chargeGain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      // Smooth triangle wave instead of harsh sawtooth
+      chargeOsc.type = 'triangle';
+      chargeOsc.frequency.setValueAtTime(60, ctx.currentTime);
+      chargeOsc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + (CHARGE_TIME_MS / 1000));
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(180, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + (CHARGE_TIME_MS / 1000));
+
+      // Quiet, pleasant cyber hum (low volume)
+      chargeGain.gain.setValueAtTime(0.002, ctx.currentTime);
+      chargeGain.gain.linearRampToValueAtTime(0.045, ctx.currentTime + (CHARGE_TIME_MS / 1000));
+
+      chargeOsc.connect(filter);
+      filter.connect(chargeGain);
+      chargeGain.connect(ctx.destination);
+      chargeOsc.start();
+    } catch (e) {}
+  }
+
+  function stopSynthCharge() {
+    if (chargeGain && audioCtx) {
+      try {
+        chargeGain.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+        setTimeout(() => {
+          if (chargeOsc) { chargeOsc.stop(); chargeOsc.disconnect(); chargeOsc = null; }
+          chargeGain = null;
+        }, 110);
+      } catch (e) {}
+    }
+  }
+
+  function playWarpBoom() {
+    try {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      if (ctx.state === 'suspended') ctx.resume();
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.6);
+
+      // Comfortable, non-piercing volume
+      gain.gain.setValueAtTime(0.14, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.65);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.7);
+    } catch (e) {}
+  }
+
+  function playAudio() {
+    if (window.safePlayAudio) window.safePlayAudio(audioEl, 0.35);
+    else { audioEl.volume = 0.35; audioEl.play().catch(() => {}); }
+  }
+
+  /* ── PROGRESS & VISUALS ── */
+  function setProgress(pct) {
+    currentPct = Math.min(Math.max(pct, 0), 100);
+    const offset = CIRCUMFERENCE * (1 - currentPct / 100);
+    ringProgress.style.strokeDashoffset = offset;
+    pctEl.textContent = Math.floor(currentPct) + '%';
+
+    root.style.setProperty('--mouse-vel', (currentPct / 100 * 0.75).toFixed(3));
+
+    const milestone = Math.floor(currentPct / 25);
+    if (milestone > lastMilestone) {
+      lastMilestone = milestone;
+      buzz(18);
+    }
+  }
+
+  function startHold(e) {
+    if (isBreached) return;
+    if (e) {
+      if (e.type === 'keydown' && e.repeat) return;
+      if (e.type === 'touchstart') e.preventDefault();
+    }
+
+    isHolding = true;
+    holdStart = performance.now() - (currentPct / 100) * CHARGE_TIME_MS;
+    lastMilestone = Math.floor(currentPct / 25);
+
+    btn.classList.add('holding');
+    statusSub.textContent  = 'YETKİLENDİRİLİYOR...';
+    statusMain.textContent = 'VERİ ALINIYOR';
+    if (protocolEl) protocolEl.textContent = 'DECRYPTING_TOKEN';
+
+    buzz(25);
+    startSynthCharge();
+
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    animFrameId = requestAnimationFrame(chargeLoop);
+  }
+
+  function chargeLoop(now) {
+    if (!isHolding || isBreached) return;
+
+    const elapsed = now - holdStart;
+    const pct = (elapsed / CHARGE_TIME_MS) * 100;
+
+    if (pct >= 100) {
+      setProgress(100);
+      triggerBreach();
+      return;
+    }
+
+    setProgress(pct);
+    animFrameId = requestAnimationFrame(chargeLoop);
+  }
+
+  function endHold() {
+    if (isBreached || !isHolding) return;
+    isHolding = false;
+    btn.classList.remove('holding');
+
+    stopSynthCharge();
+
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    statusSub.textContent  = 'İŞLEM KESİLDİ';
+    statusMain.textContent = 'BASILI TUTUN';
+    if (protocolEl) protocolEl.textContent = 'NEURAL_LINK_STBY';
+
+    const decayStart = performance.now();
+    const startPct = currentPct;
+    const decayDuration = 350;
+
+    function decayLoop(now) {
+      if (isHolding || isBreached) return;
+      const progress = Math.min((now - decayStart) / decayDuration, 1);
+      const remainingPct = startPct * (1 - progress);
+      setProgress(remainingPct);
+
+      if (progress < 1) {
+        animFrameId = requestAnimationFrame(decayLoop);
+      } else {
+        setProgress(0);
+        statusSub.textContent  = 'SİSTEMİ YETKİLENDİR';
+        statusMain.textContent = 'BASILI TUTUN';
+      }
+    }
+    animFrameId = requestAnimationFrame(decayLoop);
+  }
+
+  function triggerBreach() {
+    if (isBreached) return;
+    isBreached = true;
+    isHolding = false;
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+
+    stopSynthCharge();
+    playWarpBoom();
+    buzz([0, 30, 40, 90]);
+
+    btn.classList.remove('holding');
+    btn.classList.add('breached');
+    statusSub.textContent  = 'PROTOKOL TAMAMLANDI';
+    statusMain.textContent = 'ERİŞİM ONAYLANDI';
+    pctEl.textContent      = '100% OK';
+    if (protocolEl) protocolEl.textContent = 'SYSTEM_OVERRIDE_SUCCESS';
+    root.style.setProperty('--mouse-vel', '0');
+
     if (window.__requestGyroPermission) window.__requestGyroPermission();
 
-    // triggerBoot içinde de güvenilir ses çalma
-    if (window.safePlayAudio) {
-      window.safePlayAudio(audioEl, 0.35);
-    } else {
-      audioEl.volume = 0.35;
-      audioEl.play().catch(() => {});
-    }
+    playAudio();
     GridController.hyperdrive();
-    if (window.stopBootParticles) window.stopBootParticles();
-    bootScreen.classList.add('fade-out');
+    if (window.stopMatrixRain) window.stopMatrixRain();
+
+    // Trigger Optic Warp Flash (zero-lag GPU flash)
+    const flashEl = document.getElementById('warp-flash');
+    if (flashEl) {
+      flashEl.classList.remove('flash-active');
+      void flashEl.offsetWidth;
+      flashEl.classList.add('flash-active');
+    }
+
+    mainContent.classList.remove('hidden');
+    mainContent.classList.add('reveal', 'warp-enter');
+    bootScreen.classList.add('hyperdrive-warp');
 
     setTimeout(() => {
       bootScreen.style.display = 'none';
-      mainContent.classList.remove('hidden');
-      mainContent.classList.add('reveal');
       requestAnimationFrame(() => requestAnimationFrame(() => {
         mainContent.classList.add('visible');
+        mainContent.classList.remove('warp-enter');
         audioBtn.classList.remove('hidden');
         if (window.showVelHud) window.showVelHud();
         startContentAnimations();
       }));
-    }, 900);
+    }, 680);
   }
 
-  if (isTouch) {
-    /* —— MOBILE: hold-to-boot —— */
-    let progress = 0, holdRaf;
-    const HOLD_DURATION = 1200; // ms to fill bar
-    const STEP_MS = 16;
+  // Pointer & Touch bindings
+  btn.addEventListener('mousedown', startHold);
+  window.addEventListener('mouseup', endHold);
+  btn.addEventListener('mouseleave', () => { if (isHolding) endHold(); });
 
-    function startHold(e) {
-      if (btn.disabled) return;
-      // Prevent page scroll while holding
+  btn.addEventListener('touchstart', startHold, { passive: false });
+  window.addEventListener('touchend', endHold, { passive: true });
+  window.addEventListener('touchcancel', endHold, { passive: true });
+
+  // Keyboard binding: Space or Enter
+  window.addEventListener('keydown', (e) => {
+    if ((e.code === 'Space' || e.key === ' ') && !isBreached && bootScreen.style.display !== 'none') {
       e.preventDefault();
-      
-      // Müzik çalmaya başlasın — iOS kilidi açık yöntemle
-      if (window.safePlayAudio) {
-        window.safePlayAudio(audioEl, 0.35);
-      } else {
-        audioEl.volume = 0.35;
-        audioEl.play().catch(() => {});
-      }
-
-      progress = 0;
-      function tick() {
-        progress += (STEP_MS / HOLD_DURATION) * 100;
-        holdBar.style.width = Math.min(progress, 100) + '%';
-        if (progress >= 100) { triggerBoot(); return; }
-        holdRaf = setTimeout(tick, STEP_MS);
-      }
-      tick();
+      startHold(e);
     }
-    function cancelHold() {
-      // Eğer sistem zaten açılmaya başladıysa (buton devre dışıysa) müziği kesme!
-      if (btn.disabled) return;
-      
-      clearTimeout(holdRaf);
-      progress = 0;
-      holdBar.style.width = '0%';
-      
-      // Müziği durdur ve başa sar
-      audioEl.pause();
-      audioEl.currentTime = 0;
+  });
+  window.addEventListener('keyup', (e) => {
+    if ((e.code === 'Space' || e.key === ' ') && !isBreached && bootScreen.style.display !== 'none') {
+      endHold();
     }
-
-    btn.addEventListener('touchstart',  startHold,  { passive: false });
-    btn.addEventListener('touchend',    cancelHold, { passive: true  });
-    btn.addEventListener('touchcancel', cancelHold, { passive: true  });
-
-  } else {
-    /* —— DESKTOP: simple click (UNCHANGED BEHAVIOUR) —— */
-    btn.addEventListener('click', triggerBoot);
-  }
+  });
 })();
+
 
 
 /* ─────────────────────────────────────────────
@@ -614,6 +895,14 @@ const Terminal = (function () {
 
     // Click anywhere on terminal block to focus input
     document.getElementById('terminal-block').addEventListener('click', () => input.focus());
+
+    // Quick command chips (mobile)
+    document.querySelectorAll('#term-quick button').forEach(chip => {
+      chip.addEventListener('click', e => {
+        e.stopPropagation();
+        execute(chip.dataset.cmd);
+      });
+    });
 
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
@@ -902,6 +1191,213 @@ function startContentAnimations() {
     const rect = stage.getBoundingClientRect();
     if (rect.bottom < 0 || rect.top > window.innerHeight) deactivateModel();
   }, { passive: true });
+})();
+
+/* ─────────────────────────────────────────────
+   14.6 MOBILE SECTION NAV — scroll spy
+   ───────────────────────────────────────────── */
+(function initMobileNav() {
+  const links = Array.from(document.querySelectorAll('#mobile-nav a'));
+  if (!links.length) return;
+
+  const map = {};
+  links.forEach(a => { map[a.dataset.sec] = a; });
+  const sections = links
+    .map(a => document.getElementById(a.dataset.sec))
+    .filter(Boolean);
+  if (!sections.length) return;
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      links.forEach(l => l.classList.remove('active'));
+      const active = map[entry.target.id];
+      if (active) active.classList.add('active');
+    });
+  }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+
+  sections.forEach(s => obs.observe(s));
+})();
+
+/* ─────────────────────────────────────────────
+   14.5 BACKGROUND / APP-SWITCH GUARD
+        Sekme arka plana atıldığında, uygulama
+        değiştirildiğinde veya tarayıcı kapatılırken
+        müziği durdurur ve RAM yiyen canvas
+        döngülerini askıya alır.
+   ───────────────────────────────────────────── */
+(function initBackgroundGuard() {
+  const audioEl = document.getElementById('bg-audio');
+  let audioWasPlaying = false;
+
+  function pauseHeavyWork() {
+    if (audioEl) {
+      audioWasPlaying = !audioEl.paused && !audioEl.ended;
+      if (audioWasPlaying) audioEl.pause();
+    }
+    if (window.stopBootParticles) window.stopBootParticles();
+    GridController.pause();
+  }
+
+  function resumeHeavyWork() {
+    GridController.resume();
+    if (audioWasPlaying && audioEl) {
+      if (window.safePlayAudio) window.safePlayAudio(audioEl);
+      else audioEl.play().catch(() => {});
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pauseHeavyWork();
+    else resumeHeavyWork();
+  });
+
+  // Mobilde tarayıcıdan çıkış / sayfadan ayrılma
+  window.addEventListener('pagehide', pauseHeavyWork);
+  window.addEventListener('beforeunload', pauseHeavyWork);
+})();
+
+/* ─────────────────────────────────────────────
+   14.7 ARCHIVE (TEAMS & PROJECTS)
+   ───────────────────────────────────────────── */
+(function initArchive() {
+  const terminalHeader = document.getElementById('archive-terminal');
+  const teamTrack = document.getElementById('team-track');
+  const projectTrack = document.getElementById('project-track');
+  const hologramStage = document.getElementById('hologram-stage');
+  const model3d = document.getElementById('model3d');
+  const projDetails = document.getElementById('project-details');
+  const projTitle = document.getElementById('proj-title');
+  const projDesc = document.getElementById('proj-desc');
+  const projSpecs = document.getElementById('proj-specs');
+  
+  const hudModelName = document.getElementById('hud-model-name');
+  const hudStatus = document.getElementById('hud-status');
+  const hudNode = document.getElementById('hud-node');
+
+  if (!terminalHeader || !teamTrack) return;
+
+  let archiveData = { teams: [], projects: [] };
+  let currentTeamId = null;
+
+  function loadData() {
+    fetch('projects.json')
+      .then(r => r.json())
+      .then(data => {
+        archiveData = data;
+        renderTeams();
+        if (data.teams.length > 0) {
+          selectTeam(data.teams[0].id);
+        }
+      })
+      .catch(e => {
+        console.error('Failed to load archive data', e);
+        terminalHeader.textContent = 'root@eyt:~/archive$ error loading data';
+      });
+  }
+
+  function renderTeams() {
+    teamTrack.innerHTML = '';
+    archiveData.teams.forEach(team => {
+      const chip = document.createElement('div');
+      chip.className = 'team-chip';
+      chip.dataset.id = team.id;
+      
+      const logo = document.createElement('div');
+      logo.className = 'team-logo-placeholder';
+      logo.textContent = team.logoText || team.name.substring(0,2).toUpperCase();
+      
+      const name = document.createElement('div');
+      name.className = 'team-name';
+      name.textContent = team.name;
+
+      chip.appendChild(logo);
+      chip.appendChild(name);
+      
+      chip.addEventListener('click', () => selectTeam(team.id));
+      teamTrack.appendChild(chip);
+    });
+  }
+
+  function selectTeam(teamId) {
+    currentTeamId = teamId;
+    
+    // Update active chip
+    document.querySelectorAll('.team-chip').forEach(el => {
+      el.classList.toggle('active', el.dataset.id === teamId);
+    });
+
+    const team = archiveData.teams.find(t => t.id === teamId);
+    terminalHeader.textContent = `root@eyt:~/archive$ cd ${team ? team.id.toUpperCase() : ''}`;
+    
+    // Render Projects
+    const teamProjects = archiveData.projects.filter(p => p.teamId === teamId);
+    renderProjects(teamProjects);
+    
+    // Auto-select first project or clear
+    if (teamProjects.length > 0) {
+      selectProject(teamProjects[0]);
+    } else {
+      clearModel();
+    }
+  }
+
+  function renderProjects(projects) {
+    projectTrack.innerHTML = '';
+    if (projects.length === 0) {
+      projectTrack.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem;">No records found.</span>';
+      return;
+    }
+
+    projects.forEach(proj => {
+      const item = document.createElement('div');
+      item.className = 'project-item';
+      item.dataset.id = proj.id;
+      item.innerHTML = `<span class="project-item-year">[${proj.year}]</span> ${proj.name}`;
+      
+      item.addEventListener('click', () => selectProject(proj));
+      projectTrack.appendChild(item);
+    });
+  }
+
+  function selectProject(proj) {
+    // Update active item
+    document.querySelectorAll('.project-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.id === proj.id);
+    });
+
+    // Update Model
+    hologramStage.style.display = 'block';
+    if (proj.modelUrl) {
+      model3d.src = proj.modelUrl;
+    } else {
+      model3d.src = '';
+    }
+
+    // Update Details
+    projDetails.style.display = 'block';
+    projTitle.textContent = proj.name;
+    projTitle.dataset.text = proj.name;
+    projDesc.textContent = proj.description || '';
+    
+    projSpecs.innerHTML = '';
+    if (proj.specs && proj.specs.length > 0) {
+      projSpecs.innerHTML = proj.specs.map(spec => `<li>${spec}</li>`).join('');
+    }
+
+    // Update HUD
+    hudModelName.textContent = `MODEL: ${proj.name.substring(0, 15).toUpperCase()}`;
+    hudStatus.textContent = 'STATUS: ONLINE';
+    hudNode.textContent = `NODE: ${proj.year}`;
+  }
+
+  function clearModel() {
+    hologramStage.style.display = 'none';
+    projDetails.style.display = 'none';
+    model3d.src = '';
+  }
+
+  loadData();
 })();
 
 /* ─────────────────────────────────────────────

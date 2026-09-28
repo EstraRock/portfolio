@@ -1,0 +1,46 @@
+{
+  "teams": [
+    {
+      "id": "aves",
+      "name": "AVES İHA",
+      "logoText": "AV",
+      "description": "Otonom insansız hava araçları takımı."
+    },
+    {
+      "id": "rover",
+      "name": "METU Rover",
+      "logoText": "RV",
+      "description": "Gezegen keşif aracı takımı."
+    }
+  ],
+  "projects": [
+    {
+      "id": "aves-2023",
+      "teamId": "aves",
+      "name": "AVES X-1 Savaşçı",
+      "year": "2023",
+      "modelUrl": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
+      "description": "2023 Teknofest Savaşan İHA kategorisi yarışma aracı. Gövde karbon fiber takviyeli kompozit, otonom uçuş sistemi Pixhawk tabanlı.",
+      "specs": [
+        "Kanat Açıklığı: 1.5m",
+        "Ağırlık: 4kg",
+        "Otonomi: Pixhawk & Jetson Nano",
+        "Kategori: Savaşan İHA"
+      ]
+    },
+    {
+      "id": "rover-2024",
+      "teamId": "rover",
+      "name": "Rover V4 Explorer",
+      "year": "2024",
+      "modelUrl": "https://modelviewer.dev/shared-assets/models/RobotExpressive.glb",
+      "description": "ERC 2024 görevleri için tasarlanmış 6 tekerlekli uzay keşif aracı. Rocker-bogie süspansiyon ve 6 eksenli robotik kol içerir.",
+      "specs": [
+        "Süspansiyon: Rocker-Bogie",
+        "Ağırlık: 45kg",
+        "Sensörler: 3D Lidar, ZED2",
+        "İşletim Sistemi: ROS 2"
+      ]
+    }
+  ]
+}

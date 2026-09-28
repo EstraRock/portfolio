@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" fill="#060810"/>
+  <rect x="12" y="12" width="168" height="168" fill="none" stroke="#00ffcc" stroke-width="4"/>
+  <path d="M28 28 h20 M28 28 v20" stroke="#00ffcc" stroke-width="4" fill="none"/>
+  <path d="M164 164 h-20 M164 164 v-20" stroke="#00ffcc" stroke-width="4" fill="none"/>
+  <text x="96" y="120" font-family="'Orbitron','Courier New',monospace" font-size="64" font-weight="900" fill="#00ffcc" text-anchor="middle" letter-spacing="2">EY</text>
+</svg>

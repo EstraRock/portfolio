@@ -1,0 +1,20 @@
+{
+  "name": "Esat Yusuf Taş — Cyber Portfolio",
+  "short_name": "EYT",
+  "description": "Elektrik-Elektronik Mühendisi, Robotik Kaptanı ve Sistem Geliştirici.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#060810",
+  "theme_color": "#060810",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
